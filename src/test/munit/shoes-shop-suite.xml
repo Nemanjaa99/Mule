@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="shoes-shop-suite.xml" />
+	<munit:test name="read-test" doc:id="1c6a6ae5-d510-49c6-883c-f3858ab01be0" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Read" doc:id="5ce675b6-d660-449c-93af-422f880bdd85" processor="file:read">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="3e1d1ae4-bbb4-4015-a656-1c0fa4c4f474" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output text/csv  --- readUrl('classpath://readtest\mock_payload4.dwl')]" mediaType="text/csv " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://readtest\mock_attributes4.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="e495a94f-9428-4d5a-a450-08244f744807" >
+				<munit:payload value="#[readUrl('classpath://readtest\set-event_payload6.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://readtest\set-event_attributes6.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to read" doc:id="34eb30c1-496b-45eb-8148-4cf0a8f6c9fe" name="read"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="776da037-f4cf-445c-a8ab-63bee026fb37" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import readtest::assert_expression_payload6
+---
+assert_expression_payload6::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="getFromDatabase-test" doc:id="fbd54b40-10d7-4219-a548-59c4a2b1e390" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Select" doc:id="3f500b5e-6b32-451f-aeed-9ca7b3ab5b96" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="afba57c2-b39b-4383-9096-b6629b3e1582" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java  --- readUrl('classpath://getFromDatabasetest\mock_payload2.dwl')]" mediaType="application/java " encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:spy doc:name="Spy Send" doc:id="9bc65668-59a3-4276-8858-783fed718bbf" processor="email:send">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="e106d94f-c2a1-4aa0-87f0-3054143522eb" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="c739ae1b-ac39-41fc-b0a6-a8522d59bbf3" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import getFromDatabasetest::spy_assert_payload12
+---
+spy_assert_payload12::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="5fb70f04-4e35-4137-9000-79c42f6782a1" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import getFromDatabasetest::spy_assert_payload13
+---
+spy_assert_payload13::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="1790aa6d-399b-40d7-b374-c0c6d9382b1f" >
+				<munit:payload value="#[output text/plain  --- readUrl('classpath://getFromDatabasetest\set-event_payload6.dwl')]" encoding="UTF-8" mediaType="text/plain " />
+				<munit:attributes value="#[readUrl('classpath://getFromDatabasetest\set-event_attributes6.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to getFromDatabase" doc:id="ed6dc1f1-d183-4198-96e8-8870b620fb2b" name="getFromDatabase"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="8ba7e778-1ed7-4902-97d2-e3905f2a8a92" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import getFromDatabasetest::assert_expression_payload6
+---
+assert_expression_payload6::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Parse Template" doc:id="765b9f3a-13b0-4d5b-91e3-fb1ed9166d76" processor="parse-template" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="4f45ce49-ef2d-4132-90da-7ae6585104de" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Verify Send" doc:id="8da1543d-ccdf-4bab-9739-d90cb39c9f9d" processor="email:send" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="e106d94f-c2a1-4aa0-87f0-3054143522eb" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="read-test1" doc:id="e8559331-77c7-4d0d-ba08-f9f43a6c0236" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Read" doc:id="e7acf81b-5eb9-4982-8bc9-74c2274ca694" processor="file:read" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="3e1d1ae4-bbb4-4015-a656-1c0fa4c4f474" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output text/csv  --- readUrl('classpath://readtest\mock_payload4.dwl')]" mediaType="text/csv " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://readtest\mock_attributes4.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="127747e0-c4bf-4f50-993b-1e6400ebb177" >
+				<munit:payload value="#[readUrl('classpath://readtest\set-event_payload6.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://readtest\set-event_attributes6.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution>
+			<try doc:name="Try" doc:id="2ea98e33-4570-47b2-8c1a-ef3c815da8a4" >
+				<flow-ref doc:name="Flow-ref to read" doc:id="3004cc4f-c587-4a8e-9cb5-95e8fec3e444" name="read" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="46262b78-ce7c-4a98-a0ec-258058b100a5" >
+						<logger level="INFO" doc:name="Logger" doc:id="3de20a39-b1b6-4c26-922a-85393052c5d8" message="success"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-that doc:name="Assert that" doc:id="543431d9-c20e-4b61-9557-8ee4651702d0" expression="#[payload.description]" is="#[MunitTools::equalTo('FILE:CONNECTIVITY')]"/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

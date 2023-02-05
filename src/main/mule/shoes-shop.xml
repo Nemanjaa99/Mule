@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<flow name="read" doc:id="7d09e98f-cac8-45e2-a9c9-0221bc88f7be" >
+		<http:listener doc:name="Listener" doc:id="fc327ce6-e7f6-40ff-ae16-94d937bcf89c" config-ref="HTTP_Listener_config" path="api" />
+		<file:read doc:name="Read" doc:id="3e1d1ae4-bbb4-4015-a656-1c0fa4c4f474" path="C:\Users\nvuletic\Desktop\warehouse.csv"/>
+		<ee:transform doc:name="Transform Message" doc:id="2ae62f07-9662-4427-b55a-36ef9e35594c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.code]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="f01b4254-daa7-41b6-a3a1-16ce1dd8b9c4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+---
+payload joinBy ',']]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="b72e5520-2871-4f3d-ad0c-eaeca8c43ed7" name="getFromDatabase" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="310a763e-afd6-4888-98fe-4dfbc7279106" type="FILE:CONNECTIVITY">
+				<ee:transform doc:name="Transform Message" doc:id="d0ce348f-6b08-4144-8af2-a1f3682723c7">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "file error",
+	description: "FILE:CONNECTIVITY"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getFromDatabase" doc:id="60f23236-f5ab-49cd-9620-c3550469dc9e" >
+		<db:select doc:name="Select" doc:id="afba57c2-b39b-4383-9096-b6629b3e1582" config-ref="Database_Config">
+			<db:sql><![CDATA[#['SELECT * FROM web_store WHERE code NOT IN ($payload)']]]></db:sql>
+		</db:select>
+		<parse-template doc:name="Parse Template" doc:id="4f45ce49-ef2d-4132-90da-7ae6585104de">
+			<content>&lt;html&gt;
+    &lt;head&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;h3&gt;Shoes to be deleted&lt;/h3&gt;
+        &lt;table border = &quot;1&quot;&gt;
+            &lt;thead&gt;
+                &lt;tr&gt;
+                    &lt;th&gt;Code&lt;/th&gt;
+                    &lt;th&gt;Name&lt;/th&gt;
+                    &lt;th&gt;Quantity&lt;/th&gt;
+                    &lt;th&gt;Description&lt;/th&gt;
+                &lt;/tr&gt;
+            &lt;/thead&gt;
+            &lt;tbody&gt;
+                &lt;tr&gt;
+                    &lt;td&gt;#[payload.code]&lt;/td&gt;
+                    &lt;td&gt;#[payload.name]&lt;/td&gt;
+                    &lt;td&gt;#[payload.quantity]&lt;/td&gt;
+                    &lt;td&gt;#[payload.description]&lt;/td&gt;
+                &lt;/tr&gt;
+            &lt;/tbody&gt;
+        &lt;/table&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</content>
+		</parse-template>
+		<email:send doc:name="Send" doc:id="e106d94f-c2a1-4aa0-87f0-3054143522eb" config-ref="Email_SMTP">
+			<email:to-addresses>
+				<email:to-address value="nemanja.vuletic.999@gmail.com" />
+			</email:to-addresses>
+			<email:body contentType="text/html" encoding="UTF-8" />
+		</email:send>
+	</flow>
+</mule>
